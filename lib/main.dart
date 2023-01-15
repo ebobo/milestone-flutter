@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import '../services/rest_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -50,6 +51,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final _cameraVideoRenderer = RTCVideoRenderer();
+  final _restService = RestService();
   String _serverUrl = 'http://172.16.1.235';
   String _username = 'qixu';
   String _password = 'Newyear2023!';
@@ -73,6 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
     servelUrlController.text = _serverUrl;
     userNameController.text = _username;
     passwordController.text = _password;
+    _restService.baseUrl = _serverUrl;
     super.initState();
   }
 
