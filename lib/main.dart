@@ -50,6 +50,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final _cameraVideoRenderer = RTCVideoRenderer();
+  String _serverUrl = 'http://172.16.1.235';
+  String _username = 'qixu';
+  String _password = 'Newyear2023!';
   List<String> _cameraList = <String>['Camera 1', 'Camera 2', 'Camera 3'];
 
   @override
@@ -78,6 +81,8 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(
               width: 280,
               child: TextField(
+                autocorrect: false,
+                enableSuggestions: false,
                 decoration: InputDecoration(
                   hintText: 'Server URL',
                 ),
