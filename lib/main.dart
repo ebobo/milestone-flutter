@@ -55,6 +55,27 @@ class _MyHomePageState extends State<MyHomePage> {
   String _password = 'Newyear2023!';
   List<String> _cameraList = <String>['Camera 1', 'Camera 2', 'Camera 3'];
 
+  final servelUrlController = TextEditingController();
+  final userNameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is removed from the widget tree.
+    servelUrlController.dispose();
+    userNameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    servelUrlController.text = _serverUrl;
+    userNameController.text = _username;
+    passwordController.text = _password;
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -79,55 +100,65 @@ class _MyHomePageState extends State<MyHomePage> {
               'Milestone server:',
             ),
             const SizedBox(height: 10),
-            const SizedBox(
+            SizedBox(
               width: 280,
               height: 45,
               child: TextField(
                 autocorrect: false,
                 enableSuggestions: false,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Server URL',
                   filled: true,
                   icon: Icon(Icons.http),
                 ),
+                controller: servelUrlController,
+                onChanged: (String value) {
+                  _serverUrl = value;
+                },
               ),
             ),
             const SizedBox(height: 10),
-            Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const <Widget>[
-                  SizedBox(
-                    width: 150,
-                    height: 45,
-                    child: TextField(
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      decoration: InputDecoration(
-                        hintText: 'Username',
-                        filled: true,
-                        icon: Icon(Icons.person),
-                      ),
-                    ),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+              SizedBox(
+                width: 150,
+                height: 45,
+                child: TextField(
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  decoration: const InputDecoration(
+                    hintText: 'Username',
+                    filled: true,
+                    icon: Icon(Icons.person),
                   ),
-                  SizedBox(width: 10),
-                  SizedBox(
-                    width: 120,
-                    height: 45,
-                    child: TextField(
-                      autocorrect: false,
-                      obscureText: true,
-                      enableSuggestions: false,
-                      decoration: InputDecoration(
-                        hintText: 'Password',
-                        filled: true,
-                      ),
-                    ),
+                  controller: userNameController,
+                  onChanged: (String value) {
+                    _username = value;
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 120,
+                height: 45,
+                child: TextField(
+                  autocorrect: false,
+                  obscureText: true,
+                  enableSuggestions: false,
+                  decoration: const InputDecoration(
+                    hintText: 'Password',
+                    filled: true,
                   ),
-                ]),
+                  controller: passwordController,
+                  onChanged: (String value) {
+                    _password = value;
+                  },
+                ),
+              ),
+            ]),
             const SizedBox(height: 10),
             TextButton(
               style: TextButton.styleFrom(backgroundColor: Colors.cyan),
-              onPressed: () => {print('ok')},
+              onPressed: () => {print('$_serverUrl, $_username, $_password')},
               child:
                   const Text('Connect', style: TextStyle(color: Colors.white)),
             ),
