@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Milestone - WebRTC',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -22,9 +23,9 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.cyan,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Milestone CCTV WebRTC Connection'),
     );
   }
 }
@@ -48,18 +49,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  final _cameraVideoRenderer = RTCVideoRenderer();
+  List<String> _cameraList = <String>['Camera 1', 'Camera 2', 'Camera 3'];
 
   @override
   Widget build(BuildContext context) {
@@ -71,45 +62,138 @@ class _MyHomePageState extends State<MyHomePage> {
     // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
+      drawer: const SettingDrawer(),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            const SizedBox(height: 30),
             const Text(
-              'You have pushed the button this many times:',
+              'Milestone server:',
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            const SizedBox(
+              width: 280,
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Server URL',
+                ),
+              ),
             ),
+            const SizedBox(height: 10),
+            Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const <Widget>[
+                  SizedBox(
+                    width: 130,
+                    child: TextField(
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      decoration: InputDecoration(
+                        hintText: 'Username',
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 20),
+                  SizedBox(
+                    width: 130,
+                    child: TextField(
+                      autocorrect: false,
+                      obscureText: true,
+                      enableSuggestions: false,
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                      ),
+                    ),
+                  ),
+                ]),
+            const SizedBox(height: 20),
+            TextButton(
+              style: TextButton.styleFrom(backgroundColor: Colors.cyan),
+              onPressed: () => {print('ok')},
+              child:
+                  const Text('Connect', style: TextStyle(color: Colors.white)),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  'Choose your remote camera:',
+                ),
+                const SizedBox(width: 10),
+                DropdownButton<String>(
+                  value: _cameraList[0],
+                  icon: const Icon(Icons.arrow_downward),
+                  iconSize: 24,
+                  elevation: 16,
+                  style: const TextStyle(color: Colors.deepPurple),
+                  underline: Container(
+                    height: 2,
+                    color: Colors.deepPurpleAccent,
+                  ),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _cameraList[0] = newValue!;
+                    });
+                  },
+                  items:
+                      _cameraList.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+
+            // const SizedBox(height: 20),
+            Flexible(
+              child: Container(
+                key: const Key('cameraView'),
+                margin: const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 20.0),
+                decoration: const BoxDecoration(color: Colors.black),
+                child: RTCVideoView(_cameraVideoRenderer),
+              ),
+            )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class SettingDrawer extends StatelessWidget {
+  const SettingDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        // Important: Remove any padding from the ListView.
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          const DrawerHeader(
+            decoration: BoxDecoration(
+              color: Colors.cyan,
+            ),
+            child: Text('Settings'),
+          ),
+          ListTile(
+            title: const Text('Server Settings'),
+            onTap: () {
+              // Update the state of the app.
+              // ...
+              // Then close the drawer.
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
     );
   }
 }
