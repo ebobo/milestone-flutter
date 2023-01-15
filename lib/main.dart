@@ -55,6 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _serverUrl = 'http://172.16.1.235';
   String _username = 'qixu';
   String _password = 'Newyear2023!';
+  bool _isConnected = false;
   List<String> _cameraList = <String>['Camera 1', 'Camera 2', 'Camera 3'];
 
   final servelUrlController = TextEditingController();
@@ -103,27 +104,37 @@ class _MyHomePageState extends State<MyHomePage> {
               'Milestone server:',
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              width: 280,
-              height: 45,
-              child: TextField(
-                autocorrect: false,
-                enableSuggestions: false,
-                decoration: const InputDecoration(
-                  hintText: 'Server URL',
-                  filled: true,
-                  icon: Icon(Icons.http),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 300,
+                  height: 45,
+                  child: TextField(
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    decoration: const InputDecoration(
+                      hintText: 'Server URL',
+                      filled: true,
+                      icon: Icon(Icons.http),
+                    ),
+                    controller: servelUrlController,
+                    onChanged: (String value) {
+                      _serverUrl = value;
+                    },
+                  ),
                 ),
-                controller: servelUrlController,
-                onChanged: (String value) {
-                  _serverUrl = value;
-                },
-              ),
+                Icon(
+                  _isConnected ? Icons.done : Icons.question_mark,
+                  size: 20,
+                  color: _isConnected ? Colors.green : Colors.grey.shade200,
+                ),
+              ],
             ),
             const SizedBox(height: 10),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
               SizedBox(
-                width: 150,
+                width: 160,
                 height: 45,
                 child: TextField(
                   autocorrect: false,
@@ -141,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               const SizedBox(width: 10),
               SizedBox(
-                width: 120,
+                width: 130,
                 height: 45,
                 child: TextField(
                   autocorrect: false,
@@ -157,13 +168,24 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                 ),
               ),
+              const SizedBox(
+                width: 20,
+              ),
             ]),
             const SizedBox(height: 10),
-            TextButton(
-              style: TextButton.styleFrom(backgroundColor: Colors.cyan),
-              onPressed: () => {print('$_serverUrl, $_username, $_password')},
-              child:
-                  const Text('Connect', style: TextStyle(color: Colors.white)),
+            SizedBox(
+              height: 32,
+              child: TextButton(
+                style: TextButton.styleFrom(backgroundColor: Colors.cyan),
+                onPressed: () {
+                  print('$_serverUrl, $_username, $_password');
+                  setState(() {
+                    _isConnected = !_isConnected;
+                  });
+                },
+                child: const Text('Connect',
+                    style: TextStyle(color: Colors.white)),
+              ),
             ),
             const SizedBox(height: 10),
             Row(
