@@ -78,13 +78,17 @@ class _MyHomePageState extends State<MyHomePage> {
             const Text(
               'Milestone server:',
             ),
+            const SizedBox(height: 10),
             const SizedBox(
               width: 280,
+              height: 45,
               child: TextField(
                 autocorrect: false,
                 enableSuggestions: false,
                 decoration: InputDecoration(
                   hintText: 'Server URL',
+                  filled: true,
+                  icon: Icon(Icons.http),
                 ),
               ),
             ),
@@ -93,29 +97,34 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const <Widget>[
                   SizedBox(
-                    width: 130,
+                    width: 150,
+                    height: 45,
                     child: TextField(
                       autocorrect: false,
                       enableSuggestions: false,
                       decoration: InputDecoration(
                         hintText: 'Username',
+                        filled: true,
+                        icon: Icon(Icons.person),
                       ),
                     ),
                   ),
-                  SizedBox(width: 20),
+                  SizedBox(width: 10),
                   SizedBox(
-                    width: 130,
+                    width: 120,
+                    height: 45,
                     child: TextField(
                       autocorrect: false,
                       obscureText: true,
                       enableSuggestions: false,
                       decoration: InputDecoration(
                         hintText: 'Password',
+                        filled: true,
                       ),
                     ),
                   ),
                 ]),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             TextButton(
               style: TextButton.styleFrom(backgroundColor: Colors.cyan),
               onPressed: () => {print('ok')},
