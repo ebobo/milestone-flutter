@@ -136,9 +136,13 @@ class _MyHomePageState extends State<MyHomePage> {
     final offerSdp = RTCSessionDescription(session['sdp'], session['type']);
     await _peerConnection!.setRemoteDescription(offerSdp);
 
+    //create answer
     final answerSdp = await _peerConnection!.createAnswer(_offerSdpConstraints);
+    await _peerConnection!.setLocalDescription(answerSdp);
 
-    print(answerSdp.toMap());
+    // final response =
+    //     await _restService.sendAnswer(jsonEncode(answerSdp.toMap()));
+    // print(response['sesssionId']);
   }
 
   @override

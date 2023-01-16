@@ -97,4 +97,26 @@ class RestService {
       throw Exception('Failed to load data');
     }
   }
+
+  Future<dynamic> sendAnswer(String localDescription) async {
+    if (baseUrl == '') {
+      return 'Error';
+    }
+    final response = await http.put(
+        Uri.parse('$baseUrl/api/WebRTC/v1/WebRTCSession'),
+        headers: <String, String>{
+          'Content-Type': 'application',
+          'Authorization': 'Bearer $_authToken'
+        },
+        body: jsonEncode(<String, String>{
+          'answerSDP': localDescription,
+        }));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data;
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
 }
