@@ -105,7 +105,7 @@ class RestService {
     final response = await http.put(
         Uri.parse('$baseUrl/api/WebRTC/v1/WebRTCSession'),
         headers: <String, String>{
-          'Content-Type': 'application',
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer $_authToken'
         },
         body: jsonEncode(<String, String>{
