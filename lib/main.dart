@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:milestone_flutter/models/cameras.dart';
@@ -39,6 +40,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final _cameraVideoRenderer = RTCVideoRenderer();
+  RTCPeerConnection? _peerConnection;
+
   final _restService = RestService();
   String _serverUrl = 'http://172.16.1.235';
   String _username = 'qixu';
@@ -51,12 +54,28 @@ class _MyHomePageState extends State<MyHomePage> {
   final userNameController = TextEditingController();
   final passwordController = TextEditingController();
 
+  final Map<String, dynamic> _configuration = {
+    'iceServers': [
+      {'url': 'stun:stun1.l.google.com:19302'},
+    ]
+  };
+
+  final Map<String, dynamic> _offerSdpConstraints = {
+    'mandatory': {
+      'OfferToReceiveAudio': true,
+      'OfferToReceiveVideo': true,
+    },
+    'optional': [],
+  };
+
   @override
-  void dispose() {
+  void dispose() async {
     // Clean up the controller when the widget is removed from the widget tree.
     servelUrlController.dispose();
     userNameController.dispose();
     passwordController.dispose();
+    // Clean up the video renderer when the widget is removed from the widget tree.
+    await _cameraVideoRenderer.dispose(); // <--- Add this line
     super.dispose();
   }
 
@@ -66,7 +85,60 @@ class _MyHomePageState extends State<MyHomePage> {
     userNameController.text = _username;
     passwordController.text = _password;
     _restService.baseUrl = _serverUrl;
+    initRenderer();
     super.initState();
+  }
+
+  initRenderer() async {
+    await _cameraVideoRenderer.initialize();
+  }
+
+  createWebRTCconnection() async {
+    if (_peerConnection != null) {
+      //"!" is a new dart operator for conversion from a nullable to a non-nullable type
+      await _peerConnection!.close();
+    }
+
+    RTCPeerConnection pc =
+        await createPeerConnection(_configuration, _offerSdpConstraints);
+
+    // when an RTCIceCandidate has been identified and added to the local peer
+    pc.onIceCandidate = (e) {
+      if (e.candidate != null) {
+        _restService.sendIceCandidate(_selectedCameraID, e.candidate!);
+      }
+    };
+    // when the state of the connection changes
+    pc.onIceConnectionState = (e) {
+      print(e);
+    };
+
+    // when a remote stream is added to the connection
+    pc.onTrack = (e) {
+      _cameraVideoRenderer.srcObject = e.streams[0];
+    };
+
+    _peerConnection = pc;
+
+    print('camera ID: $_selectedCameraID');
+
+    if (_selectedCameraID.isNotEmpty) {
+      _initialCameraSession();
+    }
+  }
+
+  _initialCameraSession() async {
+    //get offer from server by camera ID
+    final offerString =
+        await _restService.getOfferByCameraID(_selectedCameraID);
+    dynamic session = await jsonDecode(offerString);
+    //set remote description
+    final offerSdp = RTCSessionDescription(session['sdp'], session['type']);
+    await _peerConnection!.setRemoteDescription(offerSdp);
+
+    final answerSdp = await _peerConnection!.createAnswer(_offerSdpConstraints);
+
+    print(answerSdp.toMap());
   }
 
   @override
@@ -184,12 +256,8 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 32,
               child: TextButton(
                 style: TextButton.styleFrom(backgroundColor: Colors.cyan),
-                onPressed: () async {
-                  String state =
-                      await _restService.signinAPIgateway(_username, _password);
-                  setState(() {
-                    _isConnected = state == 'Success';
-                  });
+                onPressed: () {
+                  createWebRTCconnection();
                 },
                 child: const Text('Connect',
                     style: TextStyle(color: Colors.white)),

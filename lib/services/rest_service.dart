@@ -49,7 +49,52 @@ class RestService {
       throw Exception('Failed to load data');
     }
   }
-}
-
 
 //webRTC
+  Future<String> sendIceCandidate(String session, String candidate) async {
+    if (baseUrl == '') {
+      return 'Error';
+    }
+    final response = await http.post(
+        Uri.parse('$baseUrl/api/WebRTC/v1/IceCandidates'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_authToken'
+        },
+        body: jsonEncode(<String, dynamic>{
+          'sessionId': 'sessionId',
+          'candidates': [candidate]
+        }));
+    if (response.statusCode == 200) {
+      return 'Success';
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
+  Future<dynamic> getOfferByCameraID(String cameraID) async {
+    if (baseUrl == '') {
+      return 'Error';
+    }
+    final response = await http.post(
+        Uri.parse('$baseUrl/api/WebRTC/v1/WebRTCSession'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_authToken'
+        },
+        body: jsonEncode(<String, String>{
+          'cameraId': cameraID,
+          'resolution': 'notInUse',
+        }));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['offerSDP'] != null) {
+        return data['offerSDP'];
+      } else {
+        return 'Error';
+      }
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+}
