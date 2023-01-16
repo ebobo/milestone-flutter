@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import '../services/rest_service.dart';
+import 'package:milestone_flutter/models/cameras.dart';
+import 'package:milestone_flutter/services/rest_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,15 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Milestone - WebRTC',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
+        // This is the theme of this application.
         primarySwatch: Colors.cyan,
       ),
       home: const MyHomePage(title: 'Milestone CCTV WebRTC Connection'),
@@ -34,14 +27,9 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
+  // This widget is the home page of this application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
   // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -56,7 +44,8 @@ class _MyHomePageState extends State<MyHomePage> {
   String _username = 'qixu';
   String _password = 'Newyear2023!';
   bool _isConnected = false;
-  List<String> _cameraList = <String>['Camera 1', 'Camera 2', 'Camera 3'];
+  List<Camera> _cameraList = [];
+  String _selectedCameraID = '';
 
   final servelUrlController = TextEditingController();
   final userNameController = TextEditingController();
@@ -108,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 300,
+                  width: 295,
                   height: 45,
                   child: TextField(
                     autocorrect: false,
@@ -124,9 +113,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                   ),
                 ),
+                const SizedBox(width: 40),
                 Icon(
                   _isConnected ? Icons.done : Icons.question_mark,
-                  size: 20,
+                  size: 25,
                   color: _isConnected ? Colors.green : Colors.grey.shade200,
                 ),
               ],
@@ -134,7 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 10),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
               SizedBox(
-                width: 160,
+                width: 155,
                 height: 45,
                 child: TextField(
                   autocorrect: false,
@@ -168,8 +158,25 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                 ),
               ),
-              const SizedBox(
-                width: 20,
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 32,
+                child: TextButton(
+                  style: TextButton.styleFrom(backgroundColor: Colors.cyan),
+                  onPressed: () async {
+                    String state = await _restService.signinAPIgateway(
+                        _username, _password);
+                    setState(() {
+                      _isConnected = state == 'Success';
+                    });
+                    final cameras = await _restService.getCamras();
+                    setState(() {
+                      _cameraList = cameras;
+                    });
+                  },
+                  child: const Text('Login',
+                      style: TextStyle(color: Colors.white)),
+                ),
               ),
             ]),
             const SizedBox(height: 10),
@@ -177,10 +184,11 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 32,
               child: TextButton(
                 style: TextButton.styleFrom(backgroundColor: Colors.cyan),
-                onPressed: () {
-                  print('$_serverUrl, $_username, $_password');
+                onPressed: () async {
+                  String state =
+                      await _restService.signinAPIgateway(_username, _password);
                   setState(() {
-                    _isConnected = !_isConnected;
+                    _isConnected = state == 'Success';
                   });
                 },
                 child: const Text('Connect',
@@ -196,7 +204,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 const SizedBox(width: 10),
                 DropdownButton<String>(
-                  value: _cameraList[0],
+                  value: _cameraList.isEmpty ? '' : _cameraList[0].id,
                   icon: const Icon(Icons.arrow_downward),
                   iconSize: 24,
                   elevation: 16,
@@ -207,14 +215,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   onChanged: (String? newValue) {
                     setState(() {
-                      _cameraList[0] = newValue!;
+                      _selectedCameraID = newValue!;
                     });
                   },
-                  items:
-                      _cameraList.map<DropdownMenuItem<String>>((String value) {
+                  items: _cameraList.map<DropdownMenuItem<String>>((Camera c) {
                     return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
+                      value: c.id,
+                      child: Text(c.displayName ?? ''),
                     );
                   }).toList(),
                 ),
