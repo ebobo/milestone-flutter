@@ -1,10 +1,16 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart'
+    show debugDefaultTargetPlatformOverride;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:milestone_flutter/models/cameras.dart';
 import 'package:milestone_flutter/services/rest_service.dart';
 
 void main() {
+  if (WebRTC.platformIsDesktop) {
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  }
   runApp(const MyApp());
 }
 
@@ -104,13 +110,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // when an RTCIceCandidate has been identified and added to the local peer
     pc.onIceCandidate = (e) {
+      print('onIceCandidate: $e');
       if (e.candidate != null) {
-        _restService.sendIceCandidate(_selectedCameraID, e.candidate!);
+        // _restService.sendIceCandidate(_selectedCameraID, e.candidate!);
       }
     };
     // when the state of the connection changes
     pc.onIceConnectionState = (e) {
-      print(e);
+      print('onIceConnectionState: $e');
+      // print(e);
     };
 
     // when a remote stream is added to the connection
@@ -120,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _peerConnection = pc;
 
-    print('camera ID: $_selectedCameraID');
+    // print('camera ID: $_selectedCameraID');
 
     if (_selectedCameraID.isNotEmpty) {
       _initialCameraSession();
@@ -129,26 +137,44 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _initialCameraSession() async {
     //get offer from server by camera ID
-    final offerString =
-        await _restService.getOfferByCameraID(_selectedCameraID);
-    dynamic session = await jsonDecode(offerString);
+    final session = await _restService.getOfferByCameraID(_selectedCameraID);
+    final offerString = session['offerSDP'];
+    final offer = jsonDecode(offerString);
+
     //set remote description
-    final offerSdp = RTCSessionDescription(session['sdp'], session['type']);
+    final offerSdp = RTCSessionDescription(offer['sdp'], offer['type']);
+    print('set remote description:');
     await _peerConnection!.setRemoteDescription(offerSdp);
 
     //create answer
+    print('create answer:');
     final answerSdp = await _peerConnection!.createAnswer(_offerSdpConstraints);
+
+    print('set local description:');
     await _peerConnection!.setLocalDescription(answerSdp);
 
-    // final response =
-    //     await _restService.sendAnswer(jsonEncode(answerSdp.toMap()));
-    // print(response['sesssionId']);
+    print('send answer');
+    session['answerSDP'] = jsonEncode(answerSdp.toMap());
+    await _restService.sendAnswer(session);
+
+    print('seession ID:  ${session['sessionId']}');
+    final candidates =
+        await _restService.getRemoteIceCandidate(session['sessionId']);
+
+    candidates.forEach((candidate) {
+      final c = jsonDecode(candidate);
+
+      final iceCandidate =
+          RTCIceCandidate(c['candidate'], c['sdpMid'], c['sdpMLineIndex']);
+      _peerConnection!.addCandidate(iceCandidate);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
+
     //
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
@@ -248,6 +274,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     final cameras = await _restService.getCamras();
                     setState(() {
                       _cameraList = cameras;
+                      _selectedCameraID = _cameraList[0].id ?? '';
                     });
                   },
                   child: const Text('Login',
@@ -276,7 +303,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 const SizedBox(width: 10),
                 DropdownButton<String>(
-                  value: _cameraList.isEmpty ? '' : _cameraList[0].id,
+                  value: _cameraList.isEmpty ? '' : _selectedCameraID,
                   icon: const Icon(Icons.arrow_downward),
                   iconSize: 24,
                   elevation: 16,
@@ -287,6 +314,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   onChanged: (String? newValue) {
                     setState(() {
+                      print('new value: $newValue');
                       _selectedCameraID = newValue!;
                     });
                   },

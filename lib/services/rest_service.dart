@@ -87,9 +87,10 @@ class RestService {
           'resolution': 'notInUse',
         }));
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final data = jsonDecode(response.body);
       if (data['offerSDP'] != null) {
-        return data['offerSDP'];
+        // not only offerSDP
+        return data;
       } else {
         return 'Error';
       }
@@ -98,7 +99,7 @@ class RestService {
     }
   }
 
-  Future<dynamic> sendAnswer(String localDescription) async {
+  Future<dynamic> sendAnswer(dynamic session) async {
     if (baseUrl == '') {
       return 'Error';
     }
@@ -108,13 +109,31 @@ class RestService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_authToken'
         },
-        body: jsonEncode(<String, String>{
-          'answerSDP': localDescription,
-        }));
+        body: jsonEncode(session));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return data;
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
+  Future<dynamic> getRemoteIceCandidate(String sessionId) async {
+    if (baseUrl == '' || _authToken == '') {
+      return [];
+    }
+    final response = await http.get(
+        Uri.parse('$baseUrl/api/WebRTC/v1/IceCandidates/$sessionId'),
+        headers: <String, String>{'Authorization': 'Bearer $_authToken'});
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['candidates'] is List) {
+        return List<dynamic>.from(data['candidates']);
+      } else {
+        return [];
+      }
     } else {
       throw Exception('Failed to load data');
     }
